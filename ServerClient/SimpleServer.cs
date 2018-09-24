@@ -65,6 +65,7 @@ namespace TCPServer
          ServerClient ConnectedClient = new ServerClient();
 
          ConnectedClient.ClientSocket = FoundClient;
+
          if (ClientList.Count < 4)
          {
             ClientList.Add(ConnectedClient);
@@ -95,6 +96,7 @@ namespace TCPServer
             // Check for end-of-file tag. If it is not there, read   
             // more data.  
             content = ConnectedClient.StringData.ToString();
+
             if (content.IndexOf("<EOF>") > -1)
             {
                // All the data has been read from the   
@@ -134,8 +136,9 @@ namespace TCPServer
             int bytesSent = handler.EndSend(ar);
             Console.WriteLine("Sent {0} bytes to client.", bytesSent);
 
-            //handler.Shutdown(SocketShutdown.Both);
-            //handler.Close();
+            ServerClient ConnectedClient = new ServerClient();
+            ConnectedClient.ClientSocket = handler;
+            handler.BeginReceive(ConnectedClient.Buffer, 0, ServerClient.BufferSize, 0, new AsyncCallback(ReadCallback), ConnectedClient);
          }
          catch (Exception e)
          {

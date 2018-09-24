@@ -39,26 +39,29 @@ namespace ServerClient
       new AsyncCallback(ConnectCallback), ClientSocket);
          connectDone.WaitOne();
 
-         // Send test data to the remote device.  
-         Send(ClientSocket, "This is a test<EOF>");
-
-         sendDone.WaitOne();
-
          // Receive the response from the remote device.  
          Receive(ClientSocket);
 
-         receiveDone.WaitOne();
-
          // Write the response to the console.  
          Console.WriteLine("Response received : {0}", response);
-
-         // Release the socket.  
-         ClientSocket.Shutdown(SocketShutdown.Both);
-
-         ClientSocket.Close();
       }
 
-      private void ConnectCallback(IAsyncResult ar)
+      public void Disconnect()
+      {
+         try
+         {
+            // Release the socket.  
+            ClientSocket.Shutdown(SocketShutdown.Both);
+            ClientSocket.Close();
+            ClientSocket.Dispose();
+         }
+         catch (Exception e)
+         {
+            Console.WriteLine("Disconnect Exception: " + e.ToString());
+         }
+      }
+
+         private void ConnectCallback(IAsyncResult ar)
       {
          try
          {
@@ -134,6 +137,17 @@ namespace ServerClient
          {
             Console.WriteLine(e.ToString());
          }
+      }
+      
+      public void SendToServer(string theMessage)
+      {
+         StringBuilder test = new StringBuilder(theMessage.Length);
+         test.Append(' ', test.Capacity);
+         Console.WriteLine(test.ToString());
+
+         Send(ClientSocket, theMessage + "<EOF>");
+
+         sendDone.WaitOne();
       }
 
       private void Send(Socket client, String data)
