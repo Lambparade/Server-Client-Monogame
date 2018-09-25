@@ -15,9 +15,9 @@ namespace ServerClient
 
          new Thread(Server.StartServer).Start();       // Run server method concurrently.
 
-         Thread.Sleep(500);               // Give server time to start.
+         //Thread.Sleep(500);               // Give server time to start...//
 
-         StartClientCommunication();
+         //StartClientCommunication();
 
       }
 
@@ -32,7 +32,7 @@ namespace ServerClient
          //SetConsoleCtrlHandler(_handler, true);
 
          // Send name to server
-         Client1.SendToServer("Test---------");
+         Client1.SendToServer($"{Client1.ClientID} has Connected!"); ;
          Console.WriteLine("------------------------------------------------");
 
          string aMessage = "";

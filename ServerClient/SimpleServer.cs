@@ -66,45 +66,50 @@ namespace TCPServer
 
          ConnectedClient.ClientSocket = FoundClient;
 
-         if (ClientList.Count < 4)
-         {
-            ClientList.Add(ConnectedClient);
-            // Create the state object.  
-            FoundClient.BeginReceive(ConnectedClient.Buffer, 0, ServerClient.BufferSize, 0,
-                new AsyncCallback(ReadCallback), ConnectedClient);
-         }
+         // Create the state object.  
+         FoundClient.BeginReceive(ConnectedClient.Buffer, 0, ServerClient.BufferSize, 0,
+             new AsyncCallback(ReadCallback), ConnectedClient);
+
       }
 
       public void ReadCallback(IAsyncResult ar)
       {
          String content = String.Empty;
 
-         // Retrieve the state object and the handler socket  
-         // from the asynchronous state object.  
          ServerClient ConnectedClient = (ServerClient)ar.AsyncState;
          Socket handler = ConnectedClient.ClientSocket;
 
-         // Read data from the client socket.   
          int bytesRead = handler.EndReceive(ar);
 
          if (bytesRead > 0)
          {
-            // There  might be more data, so store the data received so far.  
             ConnectedClient.StringData.Append(Encoding.ASCII.GetString(
                 ConnectedClient.Buffer, 0, bytesRead));
 
-            // Check for end-of-file tag. If it is not there, read   
-            // more data.  
             content = ConnectedClient.StringData.ToString();
 
-            if (content.IndexOf("<EOF>") > -1)
+            CheckForNewClient(content, ConnectedClient);
+
+            if (content.IndexOf("<QUIT>") > - 1)
+            {
+               DisconnectClient(PullClientName(content));
+
+            }
+            else if (content.IndexOf("<EOF>") > -1)
             {
                // All the data has been read from the   
                // client. Display it on the console.  
-               Console.WriteLine("Read {0} bytes from socket. \n Data : {1}",
+               Console.WriteLine("<SERVER> Read {0} bytes from socket. \n Data : {1}",
                    content.Length, content);
-               // Echo the data back to the client.  
-               Send(handler, content);
+
+               if (ClientList.Count == 1)
+               {
+                  Send(ConnectedClient, content);
+               }
+               else
+               {
+                  Send(ClientList, content);
+               }
             }
             else
             {
@@ -112,17 +117,56 @@ namespace TCPServer
                handler.BeginReceive(ConnectedClient.Buffer, 0, ServerClient.BufferSize, 0,
                new AsyncCallback(ReadCallback), ConnectedClient);
             }
+
+            ConnectedClient.StringData.Clear();
          }
       }
 
-      private void Send(Socket ClientSocket, String data)
+      private void Send(ServerClient Client, String data)
       {
-         // Convert the string data to byte data using ASCII encoding.  
-         byte[] byteData = Encoding.ASCII.GetBytes(data);
+         string Clientname = PullClientName(data);
 
-         // Begin sending the data to the remote device.  
-         ClientSocket.BeginSend(byteData, 0, byteData.Length, 0,
-             new AsyncCallback(SendCallback), ClientSocket);
+         if (Clientname != Client.ClientName)
+         {
+            // Convert the string data to byte data using ASCII encoding.  
+            byte[] byteData = Encoding.ASCII.GetBytes(data);
+
+            // Begin sending the data to the remote device.  
+            Client.ClientSocket.BeginSend(byteData, 0, byteData.Length, 0,
+                new AsyncCallback(SendCallback), Client.ClientSocket);
+         }
+         else
+         {
+            Client.ClientSocket.BeginReceive(Client.Buffer, 0, ServerClient.BufferSize, 0, new AsyncCallback(ReadCallback),Client);
+         }
+      }
+
+      private void Send(List<ServerClient> ClientList, string data)
+      {
+         foreach (ServerClient ConnectedClient in ClientList)
+         {
+            Send(ConnectedClient, data);
+         }
+      }
+
+      private void DisconnectClient(string ClientName)
+      {
+         Socket SocketToDisconnect;
+
+         foreach(ServerClient client in ClientList.ToArray())
+         {
+            if(client.ClientName == ClientName)
+            {
+               SocketToDisconnect = client.ClientSocket;
+
+               SocketToDisconnect.Shutdown(SocketShutdown.Both);
+               SocketToDisconnect.Close();
+
+               ClientList.Remove(client);
+
+               return;
+            }
+         }
       }
 
       private void SendCallback(IAsyncResult ar)
@@ -134,7 +178,7 @@ namespace TCPServer
 
             // Complete sending the data to the remote device.  
             int bytesSent = handler.EndSend(ar);
-            Console.WriteLine("Sent {0} bytes to client.", bytesSent);
+            Console.WriteLine($"Sent  {bytesSent} bytes to client.", bytesSent);
 
             ServerClient ConnectedClient = new ServerClient();
             ConnectedClient.ClientSocket = handler;
@@ -145,18 +189,75 @@ namespace TCPServer
             Console.WriteLine(e.ToString());
          }
       }
-   }
 
-   class ServerClient
-   {
-      public string ClientName;
+      private void CheckForNewClient(string Content, ServerClient ClientToAdd)
+      {
+         string ClientName = PullClientName(Content);
 
-      public Socket ClientSocket = null;
+         foreach (ServerClient client in ClientList)
+         {
+            if (client.ClientName == ClientName)
+            {
+               return;
+            }
+         }
 
-      public const int BufferSize = 1024;
+         if (ClientList.Count < 2)
+         {
+            ClientToAdd.ClientName = ClientName;
 
-      public byte[] Buffer = new byte[BufferSize];
+            ClientList.Add(ClientToAdd);
+         }
+      }
 
-      public StringBuilder StringData = new StringBuilder();
+      private int CustomIndexOf(string source, char toFind, int position)
+      {
+         int index = -1;
+
+         for (int i = 0; i < position; i++)
+         {
+            index = source.IndexOf(toFind, index + 1);
+
+            if (index == -1)
+               break;
+         }
+
+         return index + 1;
+      }
+
+      private string PullClientName(string Content)
+      {
+         string ClientName = string.Empty;
+
+         int StartIndex = -1;
+
+         int EndIndex = -1;
+
+         StartIndex = CustomIndexOf(Content, '%', 1);
+
+         EndIndex = CustomIndexOf(Content, '%', 2);
+
+         if (StartIndex != 0 & EndIndex != 0)
+         {
+            ClientName = Content.Substring(StartIndex, EndIndex - StartIndex - 1);
+
+            return ClientName;
+         }
+
+         return ClientName;
+      }
+
+      class ServerClient
+      {
+         public string ClientName;
+
+         public Socket ClientSocket = null;
+
+         public const int BufferSize = 1024;
+
+         public byte[] Buffer = new byte[BufferSize];
+
+         public StringBuilder StringData = new StringBuilder();
+      }
    }
 }

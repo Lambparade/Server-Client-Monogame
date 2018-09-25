@@ -8,8 +8,11 @@ using System.Threading;
 namespace ServerClient
 {
 
-   class SimpleClient
+   public class SimpleClient
    {
+
+      public string Command { get; set; }
+
       public string ClientID;
 
       IPAddress ServerIp = IPAddress.Parse("192.168.16.87");
@@ -29,6 +32,15 @@ namespace ServerClient
          ClientID = ClientName;
       }
 
+      public string PullCommand()
+      {
+         string command = Command;
+
+         Command = string.Empty;
+
+         return command;
+      }
+
       public void StartClientConnection()
       {
          IPEndPoint ClientEndPoint = new IPEndPoint(ServerIp, Port);
@@ -43,13 +55,14 @@ namespace ServerClient
          Receive(ClientSocket);
 
          // Write the response to the console.  
-         Console.WriteLine("Response received : {0}", response);
+         Console.WriteLine("<Client>Response received : {0}", response);
       }
 
       public void Disconnect()
       {
          try
          {
+            SendToServer("<QUIT>");
             // Release the socket.  
             ClientSocket.Shutdown(SocketShutdown.Both);
             ClientSocket.Close();
@@ -57,7 +70,7 @@ namespace ServerClient
          }
          catch (Exception e)
          {
-            Console.WriteLine("Disconnect Exception: " + e.ToString());
+            Console.WriteLine("<Client> Disconnect Exception: " + e.ToString());
          }
       }
 
@@ -71,7 +84,7 @@ namespace ServerClient
             // Complete the connection.  
             client.EndConnect(ar);
 
-            Console.WriteLine("Socket connected to {0}",
+            Console.WriteLine("<Client>Socket connected to {0}",
                 client.RemoteEndPoint.ToString());
 
             // Signal that the connection has been made.  
@@ -118,6 +131,12 @@ namespace ServerClient
                // There might be more data, so store the data received so far.  
                ConnectedClient.StringData.Append(Encoding.ASCII.GetString(ConnectedClient.Buffer, 0, bytesRead));
 
+               string DataToReceive = ConnectedClient.StringData.Replace("<EOF>", "").Replace("Sent","").Replace("%","").ToString();
+
+               Console.WriteLine($"{DataToReceive}");
+
+               ConnectedClient.StringData.Clear();
+
                // Get the rest of the data.  
                client.BeginReceive(ConnectedClient.Buffer, 0, Client.BufferSize, 0,
                    new AsyncCallback(ReceiveCallback), ConnectedClient);
@@ -143,7 +162,7 @@ namespace ServerClient
       {
          StringBuilder test = new StringBuilder(theMessage.Length);
          test.Append(' ', test.Capacity);
-         Console.WriteLine(test.ToString());
+        // Console.WriteLine(test.ToString());
 
          Send(ClientSocket, theMessage + "<EOF>");
 
@@ -152,7 +171,7 @@ namespace ServerClient
 
       private void Send(Socket client, String data)
       {
-         string DataToSend = $"{ClientID}: Sent {data}";
+         string DataToSend = $"%{ClientID}%: Sent {data}";
 
          // Convert the string data to byte data using ASCII encoding.  
          byte[] byteData = Encoding.ASCII.GetBytes(DataToSend);
@@ -171,7 +190,7 @@ namespace ServerClient
 
             // Complete sending the data to the remote device.  
             int bytesSent = client.EndSend(ar);
-            Console.WriteLine($" {ClientID} Sent {bytesSent} bytes to server.");
+            Console.WriteLine($"<Client> {ClientID} Sent {bytesSent} bytes to server.");
 
             // Signal that all bytes have been sent.  
             sendDone.Set();
@@ -180,6 +199,43 @@ namespace ServerClient
          {
             Console.WriteLine(e.ToString());
          }
+      }
+
+      private string PullClientName(string Content)
+      {
+         string ClientName = string.Empty;
+
+         int StartIndex = -1;
+
+         int EndIndex = -1;
+
+         StartIndex = CustomIndexOf(Content, '%', 1);
+
+         EndIndex = CustomIndexOf(Content, '%', 2);
+
+         if (StartIndex != 0 & EndIndex != 0)
+         {
+            ClientName = Content.Substring(StartIndex, EndIndex - StartIndex - 1);
+
+            return ClientName;
+         }
+
+         return ClientName;
+      }
+
+      private int CustomIndexOf(string source, char toFind, int position)
+      {
+         int index = -1;
+
+         for (int i = 0; i < position; i++)
+         {
+            index = source.IndexOf(toFind, index + 1);
+
+            if (index == -1)
+               break;
+         }
+
+         return index + 1;
       }
    }
 
