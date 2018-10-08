@@ -60,16 +60,23 @@ namespace TCPServer
 
          // Get the socket that handles the client request.  
          Socket listener = (Socket)ar.AsyncState;
+
          Socket FoundClient = listener.EndAccept(ar);
 
          ServerClient ConnectedClient = new ServerClient();
 
          ConnectedClient.ClientSocket = FoundClient;
 
-         // Create the state object.  
-         FoundClient.BeginReceive(ConnectedClient.Buffer, 0, ServerClient.BufferSize, 0,
-             new AsyncCallback(ReadCallback), ConnectedClient);
-
+         if (ClientList.Count < 2)
+         {
+            // Create the state object.  
+            FoundClient.BeginReceive(ConnectedClient.Buffer, 0, ServerClient.BufferSize, 0,
+                new AsyncCallback(ReadCallback), ConnectedClient);
+         }
+         else
+         {
+            Send(ConnectedClient, "MATCH IS FULL<FD>");//Force Disconnect
+         }
       }
 
       public void ReadCallback(IAsyncResult ar)
@@ -78,44 +85,56 @@ namespace TCPServer
 
          ServerClient ConnectedClient = (ServerClient)ar.AsyncState;
          Socket handler = ConnectedClient.ClientSocket;
+         int bytesRead;
 
-         int bytesRead = handler.EndReceive(ar);
-
-         if (bytesRead > 0)
+         if (handler.Connected)
          {
-            ConnectedClient.StringData.Append(Encoding.ASCII.GetString(
-                ConnectedClient.Buffer, 0, bytesRead));
+            SocketError errorCode;
 
-            content = ConnectedClient.StringData.ToString();
+            bytesRead = ConnectedClient.ClientSocket.EndReceive(ar, out errorCode);
 
-            CheckForNewClient(content, ConnectedClient);
-
-            if (content.IndexOf("<QUIT>") > - 1)
+            if (errorCode != SocketError.Success)
             {
-               DisconnectClient(PullClientName(content));
+               bytesRead = 0;
+               handler.Shutdown(SocketShutdown.Both);
+               handler.Close();
 
+               DisconnectClient(ConnectedClient.ClientName);
             }
-            else if (content.IndexOf("<EOF>") > -1)
-            {
-               // All the data has been read from the   
-               // client. Display it on the console.  
-               Console.WriteLine("<SERVER> Read {0} bytes from socket. \n Data : {1}",
-                   content.Length, content);
 
-               if (ClientList.Count == 1)
-               {
-                  Send(ConnectedClient, content);
-               }
-               else
-               {
-                  Send(ClientList, content);
-               }
-            }
-            else
+            if (bytesRead > 0)
             {
-               // Not all data received. Get more.  
-               handler.BeginReceive(ConnectedClient.Buffer, 0, ServerClient.BufferSize, 0,
-               new AsyncCallback(ReadCallback), ConnectedClient);
+               ConnectedClient.StringData.Append(Encoding.ASCII.GetString(
+                   ConnectedClient.Buffer, 0, bytesRead));
+
+               content = ConnectedClient.StringData.ToString();
+
+               if (CheckForNewClient(content, ConnectedClient))
+               {
+
+                  if (content.IndexOf("<EOF>") > -1)
+                  {
+                     // All the data has been read from the   
+                     // client. Display it on the console.  
+                     Console.WriteLine("<SERVER> Read {0} bytes from socket. \n Data : {1}",
+                         content.Length, content);
+
+                     if (ClientList.Count == 1)
+                     {
+                        Send(ConnectedClient, content);
+                     }
+                     else
+                     {
+                        Send(ClientList, content);
+                     }
+                  }
+                  else
+                  {
+                     // Not all data received. Get more.  
+                     handler.BeginReceive(ConnectedClient.Buffer, 0, ServerClient.BufferSize, 0,
+                     new AsyncCallback(ReadCallback), ConnectedClient);
+                  }
+               }
             }
 
             ConnectedClient.StringData.Clear();
@@ -131,19 +150,26 @@ namespace TCPServer
             // Convert the string data to byte data using ASCII encoding.  
             byte[] byteData = Encoding.ASCII.GetBytes(data);
 
-            // Begin sending the data to the remote device.  
-            Client.ClientSocket.BeginSend(byteData, 0, byteData.Length, 0,
-                new AsyncCallback(SendCallback), Client.ClientSocket);
+            if (Client.ClientSocket.Connected)
+            {
+               // Begin sending the data to the remote device.  
+               Client.ClientSocket.BeginSend(byteData, 0, byteData.Length, 0,
+                   new AsyncCallback(SendCallback), Client.ClientSocket);
+            }
+            else
+            {
+               DisconnectClient(Client.ClientName);
+            }
          }
          else
          {
-            Client.ClientSocket.BeginReceive(Client.Buffer, 0, ServerClient.BufferSize, 0, new AsyncCallback(ReadCallback),Client);
+            Client.ClientSocket.BeginReceive(Client.Buffer, 0, ServerClient.BufferSize, 0, new AsyncCallback(ReadCallback), Client);
          }
       }
 
       private void Send(List<ServerClient> ClientList, string data)
       {
-         foreach (ServerClient ConnectedClient in ClientList)
+         foreach (ServerClient ConnectedClient in ClientList.ToArray())
          {
             Send(ConnectedClient, data);
          }
@@ -151,18 +177,19 @@ namespace TCPServer
 
       private void DisconnectClient(string ClientName)
       {
-         Socket SocketToDisconnect;
-
-         foreach(ServerClient client in ClientList.ToArray())
+         foreach (ServerClient client in ClientList.ToArray())
          {
-            if(client.ClientName == ClientName)
+            if (client.ClientName == ClientName)
             {
-               SocketToDisconnect = client.ClientSocket;
+               Console.ForegroundColor = ConsoleColor.Red;
 
-               SocketToDisconnect.Shutdown(SocketShutdown.Both);
-               SocketToDisconnect.Close();
+               Console.WriteLine($"{ClientName} has disconnected..");
+
+               Console.ForegroundColor = ConsoleColor.Gray;
 
                ClientList.Remove(client);
+
+               Send(ClientList, $"{ClientName} has disconnected");
 
                return;
             }
@@ -190,15 +217,17 @@ namespace TCPServer
          }
       }
 
-      private void CheckForNewClient(string Content, ServerClient ClientToAdd)
+      private bool CheckForNewClient(string Content, ServerClient ClientToAdd)
       {
+         bool IsNewClient = false;
+
          string ClientName = PullClientName(Content);
 
          foreach (ServerClient client in ClientList)
          {
             if (client.ClientName == ClientName)
             {
-               return;
+               return true;
             }
          }
 
@@ -207,7 +236,11 @@ namespace TCPServer
             ClientToAdd.ClientName = ClientName;
 
             ClientList.Add(ClientToAdd);
+
+            IsNewClient = true;
          }
+
+         return IsNewClient;
       }
 
       private int CustomIndexOf(string source, char toFind, int position)

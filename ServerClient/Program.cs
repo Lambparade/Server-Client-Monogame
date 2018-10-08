@@ -15,9 +15,9 @@ namespace ServerClient
 
          new Thread(Server.StartServer).Start();       // Run server method concurrently.
 
-         //Thread.Sleep(500);               // Give server time to start...//
+         Thread.Sleep(500);               // Give server time to start...//
 
-         //StartClientCommunication();
+         StartClientCommunication();
 
       }
 
@@ -30,30 +30,33 @@ namespace ServerClient
          // Register the event for clicking on the X to close the program
          //_handler += new EventHandler(Handler);
          //SetConsoleCtrlHandler(_handler, true);
-
-         // Send name to server
-         Client1.SendToServer($"{Client1.ClientID} has Connected!"); ;
-         Console.WriteLine("------------------------------------------------");
-
-         string aMessage = "";
-
-         while (true)
+         if (Client1.IsConnected)
          {
-            //aMessage = Console.ReadLine();
-            if ((aMessage = Console.ReadLine()) == "/quit")
+
+            // Send name to server
+            Client1.SendToServer($"{Client1.ClientID} has Connected!"); ;
+            Console.WriteLine("------------------------------------------------");
+
+            string aMessage = "";
+
+            while (true)
             {
-               Client1.SendToServer("/[sys]quit");
-               break;
+               //aMessage = Console.ReadLine();
+               if ((aMessage = Console.ReadLine()) == "/quit")
+               {
+                  Client1.SendToServer("/[sys]quit");
+                  break;
+               }
+
+               if (string.IsNullOrEmpty(aMessage.Replace(" ", "")))
+                  continue;
+
+               Client1.SendToServer(aMessage);
             }
 
-            if (string.IsNullOrEmpty(aMessage.Replace(" ", "")))
-               continue;
+            Client1.Disconnect();
 
-            Client1.SendToServer(aMessage);
          }
-
-         Client1.Disconnect();
-
          Console.WriteLine("End of programC.");
          Console.ReadKey();
       }

@@ -11,9 +11,13 @@ namespace ServerClient
    public class SimpleClient
    {
 
+      CommandHandler CommandParser = new CommandHandler();
+
       public string Command { get; set; }
 
       public string ClientID;
+
+      public bool IsConnected { get; set; } = false;
 
       IPAddress ServerIp = IPAddress.Parse("192.168.16.87");
 
@@ -47,26 +51,44 @@ namespace ServerClient
 
          ClientSocket = new Socket(ServerIp.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
 
-         ClientSocket.BeginConnect(ClientEndPoint,
+         IAsyncResult result = ClientSocket.BeginConnect(ClientEndPoint,
       new AsyncCallback(ConnectCallback), ClientSocket);
+         bool ConnectionSuccessful = result.AsyncWaitHandle.WaitOne(1000, true);
+
+         if (!ConnectionSuccessful)
+         {
+            ClientSocket.Close();
+            Console.WriteLine("Failed to connect to server.");
+
+            return;
+         }
+         else
+         {
+            IsConnected = true;
+         }
          connectDone.WaitOne();
 
          // Receive the response from the remote device.  
          Receive(ClientSocket);
 
          // Write the response to the console.  
-         Console.WriteLine("<Client>Response received : {0}", response);
+         Console.WriteLine("<Client>Connected to server : {0}",IsConnected.ToString());
       }
 
       public void Disconnect()
       {
          try
          {
-            SendToServer("<QUIT>");
-            // Release the socket.  
-            ClientSocket.Shutdown(SocketShutdown.Both);
-            ClientSocket.Close();
-            ClientSocket.Dispose();
+            if (IsConnected)
+            {
+               SendToServer("<QUIT>");
+               // Release the socket.  
+               ClientSocket.Shutdown(SocketShutdown.Both);
+               ClientSocket.Close();
+               //  ClientSocket.Dispose();
+
+               IsConnected = false;
+            }
          }
          catch (Exception e)
          {
@@ -74,21 +96,24 @@ namespace ServerClient
          }
       }
 
-         private void ConnectCallback(IAsyncResult ar)
+      private void ConnectCallback(IAsyncResult ar)
       {
          try
          {
-            // Retrieve the socket from the state object.  
-            Socket client = (Socket)ar.AsyncState;
+            if (IsConnected)
+            {
+               // Retrieve the socket from the state object.  
+               Socket client = (Socket)ar.AsyncState;
 
-            // Complete the connection.  
-            client.EndConnect(ar);
+               // Complete the connection.  
+               client.EndConnect(ar);
 
-            Console.WriteLine("<Client>Socket connected to {0}",
-                client.RemoteEndPoint.ToString());
+               Console.WriteLine("<Client>Socket connected to {0}",
+                   client.RemoteEndPoint.ToString());
 
-            // Signal that the connection has been made.  
-            connectDone.Set();
+               // Signal that the connection has been made.  
+               connectDone.Set();
+            }
          }
          catch (Exception e)
          {
@@ -100,13 +125,16 @@ namespace ServerClient
       {
          try
          {
-            // Create the state object.  
-            Client ConnectedClient = new Client();
-            ConnectedClient.ClientSocket = client;
+            if (IsConnected)
+            {
+               // Create the state object.  
+               Client ConnectedClient = new Client();
+               ConnectedClient.ClientSocket = client;
 
-            // Begin receiving the data from the remote device.  
-            client.BeginReceive(ConnectedClient.Buffer, 0, Client.BufferSize, 0,
-                new AsyncCallback(ReceiveCallback), ConnectedClient);
+               // Begin receiving the data from the remote device.  
+               client.BeginReceive(ConnectedClient.Buffer, 0, Client.BufferSize, 0,
+                   new AsyncCallback(ReceiveCallback), ConnectedClient);
+            }
          }
          catch (Exception e)
          {
@@ -118,38 +146,48 @@ namespace ServerClient
       {
          try
          {
-            // Retrieve the state object and the client socket   
-            // from the asynchronous state object.  
-            Client ConnectedClient = (Client)ar.AsyncState;
-            Socket client = ConnectedClient.ClientSocket;
-
-            // Read data from the remote device.  
-            int bytesRead = client.EndReceive(ar);
-
-            if (bytesRead > 0)
+            if (IsConnected)
             {
-               // There might be more data, so store the data received so far.  
-               ConnectedClient.StringData.Append(Encoding.ASCII.GetString(ConnectedClient.Buffer, 0, bytesRead));
+               Client ConnectedClient = (Client)ar.AsyncState;
+               Socket client = ConnectedClient.ClientSocket;
 
-               string DataToReceive = ConnectedClient.StringData.Replace("<EOF>", "").Replace("Sent","").Replace("%","").ToString();
+               // Read data from the remote device.  
+               SocketError errorCode;
 
-               Console.WriteLine($"{DataToReceive}");
+               int bytesRead = ConnectedClient.ClientSocket.EndReceive(ar, out errorCode);
 
-               ConnectedClient.StringData.Clear();
-
-               // Get the rest of the data.  
-               client.BeginReceive(ConnectedClient.Buffer, 0, Client.BufferSize, 0,
-                   new AsyncCallback(ReceiveCallback), ConnectedClient);
-            }
-            else
-            {
-               // All the data has arrived; put it in response.  
-               if (ConnectedClient.StringData.Length > 1)
+               if (errorCode != SocketError.Success)
                {
-                  response = ConnectedClient.StringData.ToString();
+                  bytesRead = 0;
+                  client.Shutdown(SocketShutdown.Both);
+                  client.Close();
+
+                  IsConnected = false;
                }
-               // Signal that all bytes have been received.  
-               receiveDone.Set();
+
+                  if (bytesRead > 0)
+               {
+                  // There might be more data, so store the data received so far.  
+                  ConnectedClient.StringData.Append(Encoding.ASCII.GetString(ConnectedClient.Buffer, 0, bytesRead));
+
+                  CommandParser.ParseCommand(ConnectedClient.StringData.ToString());
+
+                  ConnectedClient.StringData.Clear();
+
+                  // Get the rest of the data.  
+                  client.BeginReceive(ConnectedClient.Buffer, 0, Client.BufferSize, 0,
+                      new AsyncCallback(ReceiveCallback), ConnectedClient);
+               }
+               else
+               {
+                  // All the data has arrived; put it in response.  
+                  if (ConnectedClient.StringData.Length > 1)
+                  {
+                     response = ConnectedClient.StringData.ToString();
+                  }
+                  // Signal that all bytes have been received.  
+                  receiveDone.Set();
+               }
             }
          }
          catch (Exception e)
@@ -157,12 +195,12 @@ namespace ServerClient
             Console.WriteLine(e.ToString());
          }
       }
-      
+
       public void SendToServer(string theMessage)
       {
          StringBuilder test = new StringBuilder(theMessage.Length);
+
          test.Append(' ', test.Capacity);
-        // Console.WriteLine(test.ToString());
 
          Send(ClientSocket, theMessage + "<EOF>");
 
@@ -176,24 +214,40 @@ namespace ServerClient
          // Convert the string data to byte data using ASCII encoding.  
          byte[] byteData = Encoding.ASCII.GetBytes(DataToSend);
 
-         // Begin sending the data to the remote device.  
-         client.BeginSend(byteData, 0, byteData.Length, 0,
-             new AsyncCallback(SendCallback), client);
+         if (IsConnected)
+         {
+            // Begin sending the data to the remote device.  
+            client.BeginSend(byteData, 0, byteData.Length, 0,
+                new AsyncCallback(SendCallback), client);
+         }
+         else
+         {
+               Console.ForegroundColor = ConsoleColor.Yellow;
+
+                Console.WriteLine("Connection has been terminated");
+
+               Console.ForegroundColor = ConsoleColor.Gray;
+         }
       }
 
       private void SendCallback(IAsyncResult ar)
       {
          try
          {
-            // Retrieve the socket from the state object.  
-            Socket client = (Socket)ar.AsyncState;
+            if (IsConnected)
+            {
+               Socket client = (Socket)ar.AsyncState;
 
-            // Complete sending the data to the remote device.  
-            int bytesSent = client.EndSend(ar);
-            Console.WriteLine($"<Client> {ClientID} Sent {bytesSent} bytes to server.");
+               int bytesSent = client.EndSend(ar);
 
-            // Signal that all bytes have been sent.  
-            sendDone.Set();
+               Console.ForegroundColor = ConsoleColor.Green;
+
+               // Console.WriteLine($"<Client> {ClientID} Sent {bytesSent} bytes to server.");
+
+               Console.ForegroundColor = ConsoleColor.Gray;
+
+               sendDone.Set();
+            }
          }
          catch (Exception e)
          {
