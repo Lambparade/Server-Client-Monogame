@@ -10,7 +10,7 @@ using static Server.ServerUtils.ServerLogger;
 
 namespace Server
 {
-   class ImprovedServer
+   class EchoServer
    {
       public static ManualResetEvent allDone = new ManualResetEvent(false);
 
@@ -22,9 +22,24 @@ namespace Server
 
       Socket MainServerSocket;
 
+      List<Client> ClientsList = new List<Client>();
+
+      int ClientCap = 10;
+
       public enum Tag
       {
          EOM,
+      }
+
+      public EchoServer(string EchoIP,int EchoPort)
+      {
+         ServerIP = IPAddress.Parse(EchoIP);
+         Port = EchoPort;
+      }
+
+      public EchoServer()
+      {
+
       }
 
       public void StartServer()
@@ -32,7 +47,7 @@ namespace Server
          if (IntalizeServer())
          {
             ServerLog.Log($"Server has started on {ServerIP} Port: {Port}", LogColor.Success);
-            ServerLog.Log("Ready to receive connections",LogColor.Success);
+            ServerLog.Log("Ready to receive connections", LogColor.Success);
             ServerLog.Log("----------------------------------------");
 
             while (true)
@@ -48,34 +63,46 @@ namespace Server
          }
       }
 
-      private void AcceptConnections(IAsyncResult AsycSocket)
+      private void Receive(Client Client)
       {
-         allDone.Set();
-
-         Client ConnectedClient = new Client();
-
-         Socket AcceptedSocket = (Socket)AsycSocket.AsyncState;
-
-         ConnectedClient.ClientSocket = AcceptedSocket.EndAccept(AsycSocket);
-
-         ServerLog.Log($"A connection has been made from {ConnectedClient.ClientSocket.LocalEndPoint} ",LogColor.Success);
-
-         ConnectedClient.ClientSocket.BeginReceive(ConnectedClient.Buffer, 0, Client.BufferSize, 0,
-             new AsyncCallback(Receive), ConnectedClient);
+         Client.ClientSocket.BeginReceive(Client.Buffer, 0, Client.BufferSize, 0,
+             new AsyncCallback(StartReceiving), Client);
       }
 
-      private void Receive(IAsyncResult ar)
+      private void SendDataToClients(Client Client, String Data)
+      {
+         string Clientname = Data;
+
+         byte[] byteData = Encoding.ASCII.GetBytes(Data);
+
+         if (isClientConnected(Client.ClientSocket))
+         {
+            Client.ClientSocket.BeginSend(byteData, 0, byteData.Length, 0,
+                new AsyncCallback(SendCallback), Client.ClientSocket);
+         }
+      }
+
+      private void EchoToAllClients(string Data)
+      {
+         foreach (Client ConnectedClient in ClientsList.ToArray())
+         {
+            SendDataToClients(ConnectedClient, Data);
+         }
+      }
+
+      private void StartReceiving(IAsyncResult AsycSocket)
       {
          string DataRead = string.Empty;
+
          int bytesRead;
 
-         Client ConnectedClient = (Client)ar.AsyncState;
+         Client ConnectedClient = (Client)AsycSocket.AsyncState;
 
          if (isClientConnected(ConnectedClient.ClientSocket))
          {
             SocketError errorCode;
 
-            bytesRead = ConnectedClient.ClientSocket.EndReceive(ar, out errorCode);
+            bytesRead = ConnectedClient.ClientSocket.EndReceive(AsycSocket, out errorCode);
 
             if (errorCode == SocketError.Success)
             {
@@ -86,72 +113,118 @@ namespace Server
 
                   DataRead = ConnectedClient.StringData.ToString();
 
-                  ServerLog.Log(DataRead,LogColor.Debug);
+                  EchoToAllClients(DataRead);
+
+                  ServerLog.Log($"String sent to server {DataRead}", LogColor.Debug);
+
+                  Receive(ConnectedClient);
                }
             }
          }
          ConnectedClient.StringData.Clear();
-   }
-
-   private bool IntalizeServer()
-   {
-      bool ServerConfiguredCorrectly = false;
-
-      try
-      {
-         IPEndPoint ServerEndPoint = new IPEndPoint(ServerIP, Port);
-
-         MainServerSocket = new Socket(ServerIP.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
-
-         MainServerSocket.Bind(ServerEndPoint);
-
-         MainServerSocket.Listen(100);
-
-         ServerConfiguredCorrectly = true;
-      }
-      catch (Exception ex)
-      {
-
       }
 
-      return ServerConfiguredCorrectly;
-   }
-
-   private bool isClientConnected(Socket Client)
-   {
-      IPGlobalProperties ipProperties = IPGlobalProperties.GetIPGlobalProperties();
-
-      TcpConnectionInformation[] tcpConnections = ipProperties.GetActiveTcpConnections();
-
-      foreach (TcpConnectionInformation c in tcpConnections)
+      private void SendCallback(IAsyncResult AsycSocket)
       {
-         TcpState stateOfConnection = c.State;
-
-         if (c.LocalEndPoint.Equals(Client.LocalEndPoint) && c.RemoteEndPoint.Equals(Client.RemoteEndPoint))
+         try
          {
-            if (stateOfConnection == TcpState.Established)
-            {
-               return true;
-            }
-            else
-            {
-               return false;
-            }
+            Client ConnectedClient = new Client();
+
+            Socket AcceptedSocket = (Socket)AsycSocket.AsyncState;
+
+            ConnectedClient.ClientSocket = AcceptedSocket;
+
+            int bytesSent = ConnectedClient.ClientSocket.EndSend(AsycSocket);
+
+            Receive(ConnectedClient);
+         }
+         catch (Exception e)
+         {
+            Console.WriteLine(e.ToString());
          }
       }
-      return false;
+
+      private void AcceptConnections(IAsyncResult AsycSocket)
+      {
+         allDone.Set();
+
+         Client ConnectedClient = new Client();
+
+         Socket AcceptedSocket = (Socket)AsycSocket.AsyncState;
+
+         ConnectedClient.ClientSocket = AcceptedSocket.EndAccept(AsycSocket);
+
+         if (ClientsList.Count < ClientCap)
+         {
+            ClientsList.Add(ConnectedClient);
+
+            Receive(ConnectedClient);
+         }
+         else
+         {
+            //Send
+         }
+      }
+
+      private bool IntalizeServer()
+      {
+         bool ServerConfiguredCorrectly = false;
+
+         try
+         {
+            IPEndPoint ServerEndPoint = new IPEndPoint(ServerIP, Port);
+
+            MainServerSocket = new Socket(ServerIP.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
+
+            MainServerSocket.Bind(ServerEndPoint);
+
+            MainServerSocket.Listen(100);
+
+            ServerConfiguredCorrectly = true;
+         }
+         catch (Exception ex)
+         {
+
+         }
+
+         return ServerConfiguredCorrectly;
+      }
+
+      private bool isClientConnected(Socket Client)
+      {
+         IPGlobalProperties ipProperties = IPGlobalProperties.GetIPGlobalProperties();
+
+         TcpConnectionInformation[] tcpConnections = ipProperties.GetActiveTcpConnections();
+
+         foreach (TcpConnectionInformation c in tcpConnections)
+         {
+            TcpState stateOfConnection = c.State;
+
+            if (c.LocalEndPoint.Equals(Client.LocalEndPoint) && c.RemoteEndPoint.Equals(Client.RemoteEndPoint))
+            {
+               if (stateOfConnection == TcpState.Established)
+               {
+                  return true;
+               }
+               else
+               {
+                  return false;
+               }
+            }
+         }
+         return false;
+      }
    }
-}
-class Client
-{
-   public string ClientName;
+   class Client
+   {
+      public string ClientName;
 
-   public Socket ClientSocket = null;
+      public Socket ClientSocket = null;
 
-   public const int BufferSize = 1024;
+      public const int BufferSize = 1024;
 
-   public byte[] Buffer = new byte[BufferSize];
+      public byte[] Buffer = new byte[BufferSize];
 
-   public StringBuilder StringData = new StringBuilder();
-}
+      public StringBuilder StringData = new StringBuilder();
+   }
 }

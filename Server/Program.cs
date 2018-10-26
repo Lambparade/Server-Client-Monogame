@@ -11,7 +11,7 @@ namespace Server
    {
       public static int Main(String[] args)
       {
-         ImprovedServer Server = new ImprovedServer();
+         EchoServer Server = new EchoServer();
 
          new Thread(Server.StartServer).Start();
 
