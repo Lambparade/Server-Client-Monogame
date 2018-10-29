@@ -1,0 +1,11 @@
+C:\Users\robinson\Documents\Visual Studio 2017\Projects\SampleNET\ServerClient\bin\Debug\netcoreapp2.1\ServerClient.deps.json
+C:\Users\robinson\Documents\Visual Studio 2017\Projects\SampleNET\ServerClient\bin\Debug\netcoreapp2.1\ServerClient.runtimeconfig.json
+C:\Users\robinson\Documents\Visual Studio 2017\Projects\SampleNET\ServerClient\bin\Debug\netcoreapp2.1\ServerClient.runtimeconfig.dev.json
+C:\Users\robinson\Documents\Visual Studio 2017\Projects\SampleNET\ServerClient\bin\Debug\netcoreapp2.1\ServerClient.dll
+C:\Users\robinson\Documents\Visual Studio 2017\Projects\SampleNET\ServerClient\bin\Debug\netcoreapp2.1\ServerClient.pdb
+C:\Users\robinson\Documents\Visual Studio 2017\Projects\SampleNET\ServerClient\obj\Debug\netcoreapp2.1\ServerClient.csproj.CoreCompileInputs.cache
+C:\Users\robinson\Documents\Visual Studio 2017\Projects\SampleNET\ServerClient\obj\Debug\netcoreapp2.1\ServerClient.AssemblyInfoInputs.cache
+C:\Users\robinson\Documents\Visual Studio 2017\Projects\SampleNET\ServerClient\obj\Debug\netcoreapp2.1\ServerClient.AssemblyInfo.cs
+C:\Users\robinson\Documents\Visual Studio 2017\Projects\SampleNET\ServerClient\obj\Debug\netcoreapp2.1\ServerClient.dll
+C:\Users\robinson\Documents\Visual Studio 2017\Projects\SampleNET\ServerClient\obj\Debug\netcoreapp2.1\ServerClient.pdb
+C:\Users\robinson\Documents\Visual Studio 2017\Projects\SampleNET\ServerClient\obj\Debug\netcoreapp2.1\ServerClient.csprojAssemblyReference.cache
