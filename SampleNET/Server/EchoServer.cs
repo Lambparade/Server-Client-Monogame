@@ -24,7 +24,7 @@ namespace Server
 
       List<Client> ClientsList = new List<Client>();
 
-      int ClientCap = 10;
+      int ClientCap = 1;
 
       public EchoServer(string EchoIP,int EchoPort)
       {
@@ -60,8 +60,11 @@ namespace Server
 
       private void Receive(Client Client)
       {
-         Client.ClientSocket.BeginReceive(Client.Buffer, 0, Client.BufferSize, 0,
-             new AsyncCallback(StartReceiving), Client);
+         if (isClientConnected(Client))
+         {
+            Client.ClientSocket.BeginReceive(Client.Buffer, 0, Client.BufferSize, 0,
+                new AsyncCallback(StartReceiving), Client);
+         }
       }
 
       private void SendDataToClient(Client Client, String Data)
@@ -70,18 +73,21 @@ namespace Server
 
          byte[] byteData = Encoding.ASCII.GetBytes(Data);
 
-         if (isClientConnected(Client.ClientSocket))
+         if (isClientConnected(Client))
          {
             Client.ClientSocket.BeginSend(byteData, 0, byteData.Length, 0,
                 new AsyncCallback(SendCallback), Client.ClientSocket);
          }
       }
 
-      private void EchoToAllClients(string Data)
+      private void EchoToAllClients(string Data,Client ClientToIgnore)
       {
          foreach (Client ConnectedClient in ClientsList.ToArray())
          {
-            SendDataToClient(ConnectedClient, Data);
+            if (ConnectedClient != ClientToIgnore)
+            {
+               SendDataToClient(ConnectedClient, Data);
+            }
          }
       }
 
@@ -93,7 +99,7 @@ namespace Server
 
          Client ConnectedClient = (Client)AsycSocket.AsyncState;
 
-         if (isClientConnected(ConnectedClient.ClientSocket))
+         if (isClientConnected(ConnectedClient))
          {
             SocketError errorCode;
 
@@ -108,7 +114,7 @@ namespace Server
 
                   DataRead = ConnectedClient.StringData.ToString();
 
-                  EchoToAllClients(DataRead);
+                  EchoToAllClients(DataRead,ConnectedClient);
 
                   ServerLog.Log($"String sent to server {DataRead}", LogColor.Debug);
 
@@ -158,7 +164,7 @@ namespace Server
          }
          else
          {
-            //Send
+            SendDataToClient(ConnectedClient, "Room is full...<FD>");
          }
       }
 
@@ -186,31 +192,52 @@ namespace Server
          return ServerConfiguredCorrectly;
       }
 
-      private bool isClientConnected(Socket Client)
+      private bool isClientConnected(Client CurrentClient)
       {
          IPGlobalProperties ipProperties = IPGlobalProperties.GetIPGlobalProperties();
 
          TcpConnectionInformation[] tcpConnections = ipProperties.GetActiveTcpConnections();
 
-         foreach (TcpConnectionInformation c in tcpConnections)
+         try
          {
-            TcpState stateOfConnection = c.State;
-
-            if (c.LocalEndPoint.Equals(Client.LocalEndPoint) && c.RemoteEndPoint.Equals(Client.RemoteEndPoint))
+            foreach (TcpConnectionInformation c in tcpConnections)
             {
-               if (stateOfConnection == TcpState.Established)
+               TcpState stateOfConnection = c.State;
+
+               if (c.LocalEndPoint.Equals(CurrentClient.ClientSocket.LocalEndPoint) && c.RemoteEndPoint.Equals(CurrentClient.ClientSocket.RemoteEndPoint))
                {
-                  return true;
-               }
-               else
-               {
-                  Client.Shutdown(SocketShutdown.Both);
-                  Client.Close();
-                  return false;
+                  if (stateOfConnection == TcpState.Established)
+                  {
+                     return true;
+                  }
+                  else
+                  {
+                     return false;
+                  }
                }
             }
          }
+         catch
+         {
+
+         }
+
+         RemoveDisconnectedClient(CurrentClient);
+
          return false;
+      }
+
+      private void CleanUpConnections()
+      {
+         foreach(Client client in ClientsList.ToArray())
+         {
+            isClientConnected(client);
+         }
+      }
+
+      private void RemoveDisconnectedClient(Client ClientToRemove)
+      {
+         ClientsList.Remove(ClientToRemove);
       }
    }
    class Client

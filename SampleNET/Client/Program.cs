@@ -100,9 +100,10 @@ namespace Client
             _handler += new EventHandler(Handler);
             SetConsoleCtrlHandler(_handler, true);
 
-            if (ChatUser.isClientConnected())
-            {
+            Thread.Sleep(500);
 
+            if (ChatUser.isClientConnected() && !ChatUser.IsRoomFull)
+            {
                // Send name to server
                ChatUser.SendToServer("THIS IS A TEST");
                Console.WriteLine("------------------------------------------------");

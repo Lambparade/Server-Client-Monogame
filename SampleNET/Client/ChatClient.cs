@@ -27,6 +27,8 @@ namespace Client
       private ManualResetEvent sendDone = new ManualResetEvent(false);
       private ManualResetEvent receiveDone = new ManualResetEvent(false);
 
+      public bool IsRoomFull = false;
+
       public ChatClient(string Username, string ServerIP, int Port)
       {
          ClientName = Username;
@@ -69,11 +71,13 @@ namespace Client
          {
             Socket client = (Socket)ar.AsyncState;
 
-            client.EndConnect(ar);
+            if (isClientConnected(ClientSocket))
+            {
+               client.EndConnect(ar);
 
-            Console.WriteLine("<Client>Socket connected to {0}",
-                client.RemoteEndPoint.ToString());
-
+               Console.WriteLine("<Client>Socket connected to {0}",
+                   client.RemoteEndPoint.ToString());
+            }
             connectDone.Set();
          }
          catch (Exception e)
@@ -125,8 +129,20 @@ namespace Client
 
                   DataRead = ConnectedServer.StringData.ToString();
 
-                  //Pass Data To parser
                   Console.WriteLine(DataRead);
+
+                  if (DataRead.IndexOf("<FD>") != -1)
+                  {
+                     ForceDisconnect();
+                     IsRoomFull = true;
+                     return;
+                  }
+                  else
+                  {
+                     IsRoomFull = false;
+                  }
+
+                  //Pass Data To parser**************************************************************************************
 
                   Receive(ClientSocket);
                }
@@ -190,8 +206,6 @@ namespace Client
                }
                else
                {
-                  Client.Shutdown(SocketShutdown.Both);
-                  Client.Close();
                   return false;
                }
             }
@@ -202,6 +216,11 @@ namespace Client
       public bool isClientConnected()
       {
          return isClientConnected(ClientSocket);
+      }
+
+      private void ForceDisconnect()
+      {
+         ClientSocket.Shutdown(SocketShutdown.Both);
       }
 
       class Server
