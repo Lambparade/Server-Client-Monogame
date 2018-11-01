@@ -11,16 +11,22 @@ namespace SimpleNet
    static class CommandHandler
    {
       static public string CurrentCommand { get; set; }
+
+      enum Commands
+      {
+         EOF,
+         MOVE,
+         ACK,
+         FD,
+      }
    
       static public void ParseCommand(string Command)
       {
-         string DataToReceive = Command.Replace("<EOF>", "").Replace("Sent", "").Replace("%", "").ToString();
-
          Console.ForegroundColor = ConsoleColor.Cyan;
 
-         Console.WriteLine(DataToReceive);
+         Console.WriteLine(Command);
 
-         CurrentCommand = DataToReceive;
+         CurrentCommand = Command;
 
          Console.ForegroundColor = ConsoleColor.Gray;
       }

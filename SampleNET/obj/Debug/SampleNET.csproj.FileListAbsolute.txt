@@ -19,3 +19,4 @@ C:\Users\robinson\Documents\Visual Studio 2017\Projects\SampleNET\SampleNET\obj\
 C:\Users\robinson\Documents\Visual Studio 2017\Projects\SampleNET\SampleNET\bin\DesktopGL\AnyCPU\Debug\SampleNET.exe.config
 C:\Users\robinson\Documents\Visual Studio 2017\Projects\SampleNET\SampleNET\bin\DesktopGL\AnyCPU\Debug\Content\Font.xnb
 C:\Users\robinson\Documents\Visual Studio 2017\Projects\SampleNET\SampleNET\obj\Debug\SampleNET.csprojAssemblyReference.cache
+C:\Users\robinson\Documents\Visual Studio 2017\Projects\SampleNET\SampleNET\bin\DesktopGL\AnyCPU\Debug\Content\Player.xnb

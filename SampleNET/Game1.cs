@@ -3,6 +3,7 @@ using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using SimpleNet;
 using System;
+using System.Collections.Generic;
 
 namespace SampleNET
 {
@@ -12,37 +13,42 @@ namespace SampleNET
    public class Game1 : Game
    {
       GraphicsDeviceManager graphics;
+
       SpriteBatch spriteBatch;
 
       SpriteFont DebugFont;
+
+      Texture2D PlayerTexture;
 
       string Command { get; set; } = "Test";
 
       string OldCommand = "Test";
 
-      SimpleClient GameClient;
+      string ConnectionStatus = string.Empty;
+
+      GameClient Test;
 
       Random ran = new Random();
-      
+
+      List<Player> PlayerList = new List<Player>();
+
+      double WaitTimeForServer = 0;
+
       public Game1()
       {
          graphics = new GraphicsDeviceManager(this);
          Content.RootDirectory = "Content";
 
-         Window.IsBorderless = true;
+         Window.IsBorderless = false ;
 
          graphics.PreferredBackBufferHeight = 512;
          graphics.PreferredBackBufferWidth = 512;
 
-         GameClient = new SimpleClient("Game1" + ran.Next(10, 2000).ToString());
+         //GameClient = new SimpleClient("Game1" + ran.Next(10, 2000).ToString());
+
+         Test = new GameClient("Player", "192.168.16.87", 5000);
       }
 
-      /// <summary>
-      /// Allows the game to perform any initialization it needs to before starting to run.
-      /// This is where it can query for any required services and load any non-graphic
-      /// related content.  Calling base.Initialize will enumerate through any components
-      /// and initialize them as well.
-      /// </summary>
       protected override void Initialize()
       {
          // TODO: Add your initialization logic here
@@ -50,21 +56,16 @@ namespace SampleNET
          base.Initialize();
       }
 
-      /// <summary>
-      /// LoadContent will be called once per game and is the place to load
-      /// all of your content.
-      /// </summary>
       protected override void LoadContent()
       {
          // Create a new SpriteBatch, which can be used to draw textures.
          spriteBatch = new SpriteBatch(GraphicsDevice);
 
          DebugFont = Content.Load<SpriteFont>("Font");
+         PlayerTexture = Content.Load<Texture2D>("Player");
 
-         GameClient.StartClientConnection();
+         Test.ConnectToServer();
 
-         GameClient.SendToServer("Hello from game!");
-         // TODO: use this.Content to load your game content here
       }
 
       /// <summary>
@@ -86,10 +87,19 @@ namespace SampleNET
          if (GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed || Keyboard.GetState().IsKeyDown(Keys.Escape))
             Exit();
 
+         MakeFirstContactWithServer(gameTime);
+
+         ConnectionStatus = Test.isClientConnected().ToString();
+
          string NewCommand = CommandHandler.GetCommand();
 
          if (!string.IsNullOrEmpty(NewCommand))
          {
+            if (NewCommand.IndexOf("ACK") != -1)
+            {
+               CreatePlayers(NewCommand);
+            }
+
             Command = string.Empty;
 
             Command += NewCommand;
@@ -116,12 +126,81 @@ namespace SampleNET
 
          spriteBatch.Begin();
 
-         spriteBatch.DrawString(DebugFont, Command, new Vector2(50, 50), Color.White);
+         spriteBatch.DrawString(DebugFont, $"CurrentCommand: {Command}", new Vector2(200, 0), Color.White);
+
+         spriteBatch.DrawString(DebugFont, $"Connected to server: {ConnectionStatus}", new Vector2(200, 32), Color.Turquoise);
+
+         foreach (Player P in PlayerList)
+         {
+            P.Draw(spriteBatch);
+         }
 
          spriteBatch.End();
          // TODO: Add your drawing code here
 
          base.Draw(gameTime);
+      }
+
+      public void CreatePlayers(string PlayerCommand)
+      {
+         int EndIndex = PlayerCommand.IndexOf("<");
+
+         string Pname = PlayerCommand.Substring(0, EndIndex);
+
+         if (!CheckForPlayer(Pname))
+         {
+            PlayerList.Add(new Player(PlayerTexture, new Vector2(10 + 10 * PlayerList.Count, 10), Pname));
+
+            BroadCastCurrentPlayers();
+         }
+
+      }
+
+      public void UpdatePlayers(GameTime gameTime, string Command)
+      {
+         foreach (Player P in PlayerList)
+         {
+            P.Update(gameTime, Command);
+         }
+      }
+
+      public bool CheckForPlayer(string PlayerName)
+      {
+         bool ret = false;
+
+         foreach (Player P in PlayerList)
+         {
+            if (P.PlayerName == PlayerName)
+            {
+               ret = true;
+            }
+         }
+
+         return ret;
+      }
+
+      public void BroadCastCurrentPlayers()
+      {
+         foreach (Player P in PlayerList)
+         {
+            Test.SendToServer($"{P.PlayerName}<ACK><X{P.X}><Y{P.Y}>");
+         }
+      }
+
+      public void MakeFirstContactWithServer(GameTime gameTime)
+      {
+         if(WaitTimeForServer < 1201)
+         {
+            WaitTimeForServer += gameTime.ElapsedGameTime.TotalMilliseconds;
+
+            if(WaitTimeForServer >= 1200)
+            {
+               if (Test.isClientConnected())
+               {
+                  Test.SendToServer("Connect");
+               }
+            }
+         }
       }
    }
 }
