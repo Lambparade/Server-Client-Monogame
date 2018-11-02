@@ -10,7 +10,7 @@ using System.Threading.Tasks;
 
 namespace SampleNET
 {
-   class Player
+   class OtherPlayer
    {
       Texture2D Graphic;
 
@@ -19,8 +19,8 @@ namespace SampleNET
       public int Y;
 
       public string PlayerName;
-     
-      public Player(Texture2D Sprite,Vector2 StartPosition,string Name)
+
+      public OtherPlayer(Texture2D Sprite, Vector2 StartPosition, string Name)
       {
          Graphic = Sprite;
 
@@ -30,9 +30,9 @@ namespace SampleNET
          PlayerName = Name;
       }
 
-      public void Update(GameTime gameTime,string Command)
+      public void Update(GameTime gameTime, string Command)
       {
-         
+         ParseCommand(Command);
       }
 
       public void Draw(SpriteBatch spriteBatch)
@@ -40,5 +40,9 @@ namespace SampleNET
          spriteBatch.Draw(Graphic, new Vector2(X, Y), Color.White);
       }
 
+      public void ParseCommand(string Command)
+      {
+
+      }
    }
 }

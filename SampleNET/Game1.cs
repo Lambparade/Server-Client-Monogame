@@ -30,7 +30,9 @@ namespace SampleNET
 
       Random ran = new Random();
 
-      List<Player> PlayerList = new List<Player>();
+      List<OtherPlayer> OtherPlayerList = new List<OtherPlayer>();
+
+      Player MainChar;
 
       double WaitTimeForServer = 0;
 
@@ -65,7 +67,6 @@ namespace SampleNET
          PlayerTexture = Content.Load<Texture2D>("Player");
 
          Test.ConnectToServer();
-
       }
 
       /// <summary>
@@ -95,7 +96,7 @@ namespace SampleNET
 
          if (!string.IsNullOrEmpty(NewCommand))
          {
-            if (NewCommand.IndexOf("ACK") != -1)
+            if (NewCommand.IndexOf("ACK") != -1 || NewCommand.IndexOf("ACC") != -1)
             {
                CreatePlayers(NewCommand);
             }
@@ -183,7 +184,7 @@ namespace SampleNET
       {
          foreach (Player P in PlayerList)
          {
-            Test.SendToServer($"{P.PlayerName}<ACK><X{P.X}><Y{P.Y}>");
+            Test.SendToServer($"{P.PlayerName}<ACC><X{P.X}><Y{P.Y}>");
          }
       }
 

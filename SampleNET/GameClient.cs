@@ -147,8 +147,6 @@ namespace SampleNET
 
                   CommandHandler.ParseCommand(DataRead);
 
-                  //Pass Data To parser**************************************************************************************
-
                   Receive(ClientSocket);
                }
             }
