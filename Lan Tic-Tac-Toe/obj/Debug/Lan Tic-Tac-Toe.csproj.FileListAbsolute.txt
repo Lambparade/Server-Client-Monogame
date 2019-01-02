@@ -1,0 +1,22 @@
+C:\Users\robinson\Documents\Visual Studio 2017\Projects\SampleNET\Lan Tic-Tac-Toe\bin\DesktopGL\AnyCPU\Debug\MonoGame.Framework.dll.config
+C:\Users\robinson\Documents\Visual Studio 2017\Projects\SampleNET\Lan Tic-Tac-Toe\bin\DesktopGL\AnyCPU\Debug\x86\SDL2.dll
+C:\Users\robinson\Documents\Visual Studio 2017\Projects\SampleNET\Lan Tic-Tac-Toe\bin\DesktopGL\AnyCPU\Debug\x64\SDL2.dll
+C:\Users\robinson\Documents\Visual Studio 2017\Projects\SampleNET\Lan Tic-Tac-Toe\bin\DesktopGL\AnyCPU\Debug\x86\soft_oal.dll
+C:\Users\robinson\Documents\Visual Studio 2017\Projects\SampleNET\Lan Tic-Tac-Toe\bin\DesktopGL\AnyCPU\Debug\x64\soft_oal.dll
+C:\Users\robinson\Documents\Visual Studio 2017\Projects\SampleNET\Lan Tic-Tac-Toe\bin\DesktopGL\AnyCPU\Debug\x86\libSDL2-2.0.so.0
+C:\Users\robinson\Documents\Visual Studio 2017\Projects\SampleNET\Lan Tic-Tac-Toe\bin\DesktopGL\AnyCPU\Debug\x64\libSDL2-2.0.so.0
+C:\Users\robinson\Documents\Visual Studio 2017\Projects\SampleNET\Lan Tic-Tac-Toe\bin\DesktopGL\AnyCPU\Debug\x86\libopenal.so.1
+C:\Users\robinson\Documents\Visual Studio 2017\Projects\SampleNET\Lan Tic-Tac-Toe\bin\DesktopGL\AnyCPU\Debug\x64\libopenal.so.1
+C:\Users\robinson\Documents\Visual Studio 2017\Projects\SampleNET\Lan Tic-Tac-Toe\bin\DesktopGL\AnyCPU\Debug\libSDL2-2.0.0.dylib
+C:\Users\robinson\Documents\Visual Studio 2017\Projects\SampleNET\Lan Tic-Tac-Toe\bin\DesktopGL\AnyCPU\Debug\libopenal.1.dylib
+C:\Users\robinson\Documents\Visual Studio 2017\Projects\SampleNET\Lan Tic-Tac-Toe\bin\DesktopGL\AnyCPU\Debug\Lan Tic-Tac-Toe.exe
+C:\Users\robinson\Documents\Visual Studio 2017\Projects\SampleNET\Lan Tic-Tac-Toe\bin\DesktopGL\AnyCPU\Debug\Lan Tic-Tac-Toe.pdb
+C:\Users\robinson\Documents\Visual Studio 2017\Projects\SampleNET\Lan Tic-Tac-Toe\bin\DesktopGL\AnyCPU\Debug\MonoGame.Framework.dll
+C:\Users\robinson\Documents\Visual Studio 2017\Projects\SampleNET\Lan Tic-Tac-Toe\obj\Debug\Lan Tic-Tac-Toe.csprojAssemblyReference.cache
+C:\Users\robinson\Documents\Visual Studio 2017\Projects\SampleNET\Lan Tic-Tac-Toe\obj\Debug\Lan Tic-Tac-Toe.csproj.CoreCompileInputs.cache
+C:\Users\robinson\Documents\Visual Studio 2017\Projects\SampleNET\Lan Tic-Tac-Toe\obj\Debug\Lan Tic-Tac-Toe.csproj.CopyComplete
+C:\Users\robinson\Documents\Visual Studio 2017\Projects\SampleNET\Lan Tic-Tac-Toe\obj\Debug\Lan Tic-Tac-Toe.exe
+C:\Users\robinson\Documents\Visual Studio 2017\Projects\SampleNET\Lan Tic-Tac-Toe\obj\Debug\Lan Tic-Tac-Toe.pdb
+C:\Users\robinson\Documents\Visual Studio 2017\Projects\SampleNET\Lan Tic-Tac-Toe\bin\DesktopGL\AnyCPU\Debug\Content\BlankCell.xnb
+C:\Users\robinson\Documents\Visual Studio 2017\Projects\SampleNET\Lan Tic-Tac-Toe\bin\DesktopGL\AnyCPU\Debug\Content\OCell.xnb
+C:\Users\robinson\Documents\Visual Studio 2017\Projects\SampleNET\Lan Tic-Tac-Toe\bin\DesktopGL\AnyCPU\Debug\Content\XCell.xnb
