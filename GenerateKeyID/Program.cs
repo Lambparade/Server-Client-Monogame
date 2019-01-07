@@ -6,7 +6,13 @@ namespace GenerateKeyID
    {
       static void Main(string[] args)
       {
-         Console.WriteLine("Hello World!");
+         string KeyID = GenerateKeyID.GetKeyID("test");
+         string UserKeyID = GenerateKeyID.GetUserKeyID("test");
+
+         Console.WriteLine(KeyID);
+         Console.WriteLine(UserKeyID);
+
+         Console.ReadKey();
       }
    }
 }

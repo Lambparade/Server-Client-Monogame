@@ -1,0 +1,11 @@
+C:\Users\robinson\Documents\Visual Studio 2017\Projects\SampleNET\GenerateKeyID\bin\Debug\netcoreapp2.1\GenerateKeyID.deps.json
+C:\Users\robinson\Documents\Visual Studio 2017\Projects\SampleNET\GenerateKeyID\bin\Debug\netcoreapp2.1\GenerateKeyID.runtimeconfig.json
+C:\Users\robinson\Documents\Visual Studio 2017\Projects\SampleNET\GenerateKeyID\bin\Debug\netcoreapp2.1\GenerateKeyID.runtimeconfig.dev.json
+C:\Users\robinson\Documents\Visual Studio 2017\Projects\SampleNET\GenerateKeyID\bin\Debug\netcoreapp2.1\GenerateKeyID.dll
+C:\Users\robinson\Documents\Visual Studio 2017\Projects\SampleNET\GenerateKeyID\bin\Debug\netcoreapp2.1\GenerateKeyID.pdb
+C:\Users\robinson\Documents\Visual Studio 2017\Projects\SampleNET\GenerateKeyID\obj\Debug\netcoreapp2.1\GenerateKeyID.csprojAssemblyReference.cache
+C:\Users\robinson\Documents\Visual Studio 2017\Projects\SampleNET\GenerateKeyID\obj\Debug\netcoreapp2.1\GenerateKeyID.csproj.CoreCompileInputs.cache
+C:\Users\robinson\Documents\Visual Studio 2017\Projects\SampleNET\GenerateKeyID\obj\Debug\netcoreapp2.1\GenerateKeyID.AssemblyInfoInputs.cache
+C:\Users\robinson\Documents\Visual Studio 2017\Projects\SampleNET\GenerateKeyID\obj\Debug\netcoreapp2.1\GenerateKeyID.AssemblyInfo.cs
+C:\Users\robinson\Documents\Visual Studio 2017\Projects\SampleNET\GenerateKeyID\obj\Debug\netcoreapp2.1\GenerateKeyID.dll
+C:\Users\robinson\Documents\Visual Studio 2017\Projects\SampleNET\GenerateKeyID\obj\Debug\netcoreapp2.1\GenerateKeyID.pdb
