@@ -1,0 +1,141 @@
+[Client]--------------------------------------------------------
+Sends and receives data from server. Parses data and draws scene.
+
+starts connection by sending a connection string request
+[Client]--------------------------------------------------------
+
+
+
+
+
+[Server]--------------------------------------------------------
+
+Verifies client and adds client to Room
+
+Disconnects clients
+
+Async calls:
+
+Accept clients
+Send Data
+Receive 
+Add waiting players to rooms
+Disconnects old clients
+
+[Server]--------------------------------------------------------
+
+
+[Room]----------------------------------------------------------
+
+X players per room.
+
+Sends all data received from client into
+
+[Room]----------------------------------------------------------
+
+
+[ServerLoop]----------------------------------------------------------
+
+First server starts and pulls config info and starts listenting
+
+Server accpets client and begins recieving from client
+
+Loop
+{
+Server receives CurrentClient data
+
+Server parses data and returns a confirm message
+
+Server sends data to RoomManager
+
+RoomManager sends data back to server with a list of clients to send data too.
+
+Server sends data to clients in client list.
+
+Server begins receiving from current client again
+}
+
+Second thread
+{
+if Client is marked as dead. Server disposes of client
+
+Server declares all clients dead.
+
+Server goes through list off all clients and sends an confirm message.
+
+
+Server begins waiting for response.
+
+If server gets response, client gets marked as "Alive".
+
+Message type is one 16 byte string of all 0s. Example: Check for allive clients: 0000000000000000...Response from clients if 0000000000000001 
+
+Server waits 30ms and trys again.
+
+}
+
+
+
+
+[ServerLoop]----------------------------------------------------------
+
+
+[Transmit Data]-------------------------------------------------
+
+Data requirements:
+
+PlayerID: 2 bytes ex:P1, P2, etc.... default: P0
+-P1 is always X
+-P2 is always O
+-Order of turns is determined by room.
+-X is always first
+
+RoomID: 2 bytes ex:R1, R2, etc......default: R0
+
+Turn: 1 byte :ex 1,0 default: 0
+
+ConnectionMsg: 2 bytes
+ex:
+CO
+DC
+PL
+
+Boardstate: 9 bytes
+
+ex: $$$-$$$-$$$ 1=x O=0 $=blank
+
+Optional 4 bytes.
+
+Unique ID of player can be used to track player in database.
+
+
+16 bytes 20bytes optional
+
+Example Connection string:
+P0R00CO$$$$$$$$$
+
+Example with UserID:
+P0R00CO$$$$$$$$$0001
+
+Example Turn:
+
+P1R11PL$$$$X$$$$
+
+P2R11PL$$$$X$O$$
+
+[Transmit Data]-------------------------------------------------
+
+[Websockets]-------------------------------------------------
+Make a cross platform chat app.
+
+Use websockets to communcate with the browser. 
+
+C# host the server and allows the user in html the info.
+
+THis could be very cool. May do this on saturday. Maybe at that library?
+
+[Websockets]-------------------------------------------------
+
+
+
+
