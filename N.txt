@@ -4,10 +4,6 @@ Sends and receives data from server. Parses data and draws scene.
 starts connection by sending a connection string request
 [Client]--------------------------------------------------------
 
-
-
-
-
 [Server]--------------------------------------------------------
 
 Verifies client and adds client to Room
@@ -108,7 +104,6 @@ Optional 4 bytes.
 
 Unique ID of player can be used to track player in database.
 
-
 16 bytes 20bytes optional
 
 Example Connection string:
@@ -135,7 +130,4 @@ C# host the server and allows the user in html the info.
 THis could be very cool. May do this on saturday. Maybe at that library?
 
 [Websockets]-------------------------------------------------
-
-
-
 
