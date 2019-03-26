@@ -1,0 +1,38 @@
+Software: lnets
+
+{Goal}**********************
+
+Software to detect and save all open  web portals on a network, within a range.
+
+Can check class A , B, and C ip addresses. 
+
+will output data to a csv file.
+
+Can also be used to load up all webportals found into a browser.
+
+{Goal}**********************
+
+
+{Arguments}**********************
+
+-r Range: specifiy an IP range to start at and will check every IP in range and IPv4 class
+
+-c Class: can check all Ip within a class range.
+
+-o Output: detemines to output location of file
+
+-p Preview: Opens all ip addresses in specified file
+
+{Arguments}**********************
+
+
+{Tech}**********************
+
+C# and .netcore
+
+{Tech}**********************
+
+
+{Workflow}**********************
+Send a http head request to a target Ip. If ip resloves, then save ip to a csv file.
+{Workflow}**********************
