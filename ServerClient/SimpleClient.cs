@@ -7,6 +7,7 @@ using System.Threading;
 
 namespace ServerClient
 {
+//The good one.
 
    public class SimpleClient
    {
